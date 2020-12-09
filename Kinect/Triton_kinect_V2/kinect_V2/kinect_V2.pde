@@ -42,6 +42,8 @@ import org.firmata.*;
 import processing.serial.*;
 
 
+
+
 //Turret turret;
 Arduino arduino;
 KinectPV2 kinect;
@@ -52,11 +54,12 @@ int HeadPort = 8;
 int DeployPort = 7;
 int WaistPort = 9;
 
+int HeadAxisMin = 20;
 
 
 boolean Mode = false;
 boolean LaserOn = false;
-boolean Deploy = true;
+boolean DeployEnabled = false;
 
 
 
@@ -83,6 +86,8 @@ float ShoulderLeftY;
 float WaistAxis = 90;
 float HeadAxis;
 
+
+
 void setup()
 {
   size(1000,700);
@@ -99,9 +104,9 @@ void setup()
   
    arduino.pinMode(WaistPort, Arduino.SERVO);
    arduino.pinMode(HeadPort, Arduino.SERVO);
-   arduino.pinMode(LaserPort, Arduino.OUTPUT);
-    delay(1000);
-  Deploy(false,30);
+
+   delay(1000);
+   Deploy(false,30);
 
 
   
@@ -109,27 +114,73 @@ void setup()
 
 void draw()
 {
-  MouseMode();  
+  
+  float x = mouseX;
+  float y = mouseY;
+  if(DeployEnabled == true)
+  {
+   background(255);
+   MouseMode(); 
+   Turret(WaistAxis, HeadAxis);
+
+  }
+  else
+  {
+    x = width / 2;
+    y = height / 2;
+    
+  }
+
+
+    
+    fill(0, 0, 0);
+   
+   ellipse(x,y, 30,30);
+ 
 }
 void Turret(float Waist, float Head)
 {
   MoveAxis(WaistPort, int(Waist));
   MoveAxis(HeadPort, int(Head)); 
 }
+void exit()
+{
+
+   Deploy(false, 30);
+   
+}
 void MouseMode()
 {
-  WaistAxis = map(mouseX, 60, width - 60, 180 ,0);
-  HeadAxis = map(mouseY, 60, height - 200, 180 ,20);
+  int limitX = 200;
+  int limitY = 100;
+  fill(#D421FC);
+  strokeWeight(8);
+  noFill();
+  rectMode(CENTER);
+  rect(width / 2,height / 2,width - limitX, height - limitY);
   
- if (Deploy == true) {
 
-  } else if(Deploy == false) {
-    
-    MoveAxis(WaistPort, 90);
+  
+  WaistAxis = map(mouseX, limitX, width - limitX, 180 ,0);
+  HeadAxis = map(mouseY, limitY, height - limitY, 180 ,HeadAxisMin);
+  
+}
+void keyPressed()
+{
+  int speed = 5;
+  if(DeployEnabled == true)
+  {
+   DeployEnabled = false;
+   Deploy(false, speed);
+  }
+  else if(DeployEnabled == false)
+  {
+    DeployEnabled = true;
+    Deploy(true, speed);
+ 
   }
 
 }
-
 
 /*Function Name: MoveAxis
     
@@ -189,8 +240,8 @@ Parameters: Enable = true: //WaistAxis = 90 (center)
 
 void Deploy(boolean Enable, int Speed)
 {
-  int Tall = 30;
-  int Short = 0;
+  int Tall = 50;
+int Short = 0;
   
   // if Speed is 0, it just makes sleep or deploy immidiate. 
   if(Enable == true)
@@ -225,6 +276,7 @@ void Deploy(boolean Enable, int Speed)
       MoveAxis(HeadPort, deg);
     }
     LaserEnable(Enable);
+
   }
 }
 
